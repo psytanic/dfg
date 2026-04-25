@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d0d1a">
+<title>DFG 💥</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Boogaloo&family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap');
+
+:root {
+  --bg: #0d0d1a;
+  --accent1: #ff3cac;
+  --accent2: #ffea00;
+  --accent3: #00f5d4;
+  --accent4: #ff6b35;
+  --white: #ffffff;
+  --card: rgba(255,255,255,0.07);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body {
+  width:100%; height:100%;
+  background: var(--bg);
+  color: var(--white);
+  font-family: 'Nunito', sans-serif;
+  overflow: hidden;
+  user-select: none;
+  position: fixed;
+  top:0; left:0;
+}
+
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 10;
+  transition: opacity 0.3s ease;
+}
+.screen.hidden { opacity:0; pointer-events:none; }
+
+
+
+/* ── COUNTDOWN ── */
+#countdownScreen { background: var(--bg); z-index: 50; text-align:center; }
+.countdown-number {
+  font-family: 'Fredoka One', cursive;
+  font-size: 140px;
+  color: var(--accent1);
+  text-shadow: 0 0 60px rgba(255,60,172,0.8);
+  animation: cpop 1s ease-out forwards;
+  line-height: 1;
+}
+.countdown-go {
+  font-family: 'Fredoka One', cursive;
+  font-size: 100px;
+  color: var(--accent2);
+  text-shadow: 0 0 60px rgba(255,234,0,0.9);
+  animation: cpop 0.5s ease-out forwards;
+}
+@keyframes cpop {
+  0% { transform:scale(1.5); opacity:0; }
+  30% { transform:scale(0.9); opacity:1; }
+  100% { transform:scale(1); opacity:1; }
+}
+
+/* ── GAME SCREEN ── */
+#gameScreen { padding:0; justify-content:flex-start; }
+#screenShakeWrapper {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 20px 20px 0;
+  will-change: transform;
+  width: 100%;
+  overflow: hidden;
+}
+
+.top-bar {
+  width:100%; display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
+.timer-box {
+  background: var(--card);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:16px;
+  padding:8px 18px;
+  font-family:'Fredoka One',cursive;
+  font-size:28px;
+  color:var(--accent2);
+  text-shadow:0 0 15px rgba(255,234,0,0.5);
+}
+.level-badge {
+  background:linear-gradient(135deg,var(--accent1),var(--accent4));
+  border-radius:16px;
+  padding:8px 18px;
+  font-family:'Fredoka One',cursive;
+  font-size:20px;
+  color:white;
+  box-shadow:0 4px 15px rgba(255,60,172,0.4);
+}
+.progress-wrap {
+  width:100%; height:10px;
+  background:rgba(255,255,255,0.08);
+  border-radius:10px;
+  overflow:hidden;
+  margin-bottom:16px;
+}
+.progress-fill {
+  height:100%;
+  border-radius:10px;
+  background:linear-gradient(90deg,var(--accent1),var(--accent2));
+  transition:width 0.1s ease;
+  box-shadow:0 0 10px rgba(255,234,0,0.5);
+  width:0%;
+}
+.level-image-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.level-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  transition: opacity 0.5s ease;
+}
+.level-bg.active { opacity: 1; }
+.level-bg.inactive { opacity: 0; }
+.level-bg { opacity: 0; }
+
+@media (max-width: 480px) {
+  .level-bg { object-fit: cover; }
+}
+
+/* Make game UI sit above background */
+#screenShakeWrapper { z-index: 1; }
+
+.shake-count {
+  font-family:'Fredoka One',cursive;
+  font-size:48px;
+  color:var(--accent3);
+  text-shadow:0 0 20px rgba(0,245,212,0.5);
+  margin:4px 0;
+  text-align:center;
+}
+.shake-label { font-size:14px; color:rgba(255,255,255,0.4); text-align:center; margin-bottom:8px; }
+.shake-instruction {
+  font-family:'Boogaloo',cursive;
+  font-size:28px;
+  color:var(--accent2);
+  text-align:center;
+  animation:pulse 1s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50% { opacity:0.7; transform:scale(0.97); }
+}
+
+/* ── LEVEL FLASH ── */
+#levelFlash {
+  position:fixed; inset:0;
+  background:var(--accent1);
+  opacity:0; pointer-events:none;
+  z-index:200; transition:opacity 0.1s;
+}
+#levelFlashText {
+  position:fixed; top:50%; left:50%;
+  transform:translate(-50%,-50%) scale(0);
+  font-family:'Fredoka One',cursive;
+  font-size:80px; color:white;
+  text-shadow:0 4px 20px rgba(0,0,0,0.5);
+  z-index:201; pointer-events:none;
+  white-space:nowrap;
+  transition:transform 0.2s, opacity 0.3s;
+  opacity:0;
+}
+
+/* ── REGRESSION WARNING ── */
+#regressionWarning {
+  position:fixed; inset:0;
+  background:rgba(255,34,34,0);
+  pointer-events:none; z-index:150;
+  transition:background 0.2s;
+}
+#regressionWarning.active { background:rgba(255,34,34,0.15); }
+
+/* ── POP SCREEN ── */
+#popScreen {
+  background:radial-gradient(ellipse at center,#1a0030 0%,#0d0d1a 80%);
+  z-index:100; text-align:center; overflow-y:auto;
+}
+#fireworksCanvas {
+  position:fixed; inset:0;
+  pointer-events:none; z-index:99;
+}
+.pop-title {
+  font-family:'Fredoka One',cursive;
+  font-size:64px; color:var(--accent2);
+  text-shadow:0 0 40px rgba(255,234,0,0.9);
+  animation:pop-bounce 0.6s ease-out;
+  position:relative; z-index:101;
+}
+.pop-sub { font-family:'Boogaloo',cursive; font-size:24px; color:var(--accent3); margin:8px 0 4px; position:relative; z-index:101; }
+.pop-time { font-family:'Fredoka One',cursive; font-size:72px; color:var(--white); text-shadow:0 0 30px rgba(255,255,255,0.5); margin:8px 0 24px; position:relative; z-index:101; }
+.pop-rank { font-size:18px; color:var(--accent1); margin-bottom:24px; font-weight:700; position:relative; z-index:101; }
+@keyframes pop-bounce {
+  0% { transform:scale(0); }
+  60% { transform:scale(1.2); }
+  100% { transform:scale(1); }
+}
+
+/* ── LEADERBOARD ── */
+.leaderboard {
+  width:100%; max-width:320px;
+  background:var(--card);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:20px;
+  padding:16px; margin-bottom:24px;
+  position:relative; z-index:101;
+}
+.lb-title { font-family:'Fredoka One',cursive; font-size:18px; color:var(--accent2); margin-bottom:10px; text-align:center; }
+.lb-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:15px; }
+.lb-row:last-child { border-bottom:none; }
+.lb-row.highlight { color:var(--accent2); font-weight:900; }
+.lb-rank { width:30px; color:rgba(255,255,255,0.4); font-size:13px; }
+.lb-time { font-family:'Fredoka One',cursive; font-size:18px; }
+.lb-medal { font-size:18px; }
+
+/* ── BUTTONS ── */
+.pop-btns { display:flex; gap:12px; width:100%; max-width:320px; position:relative; z-index:101; }
+.pop-btn {
+  flex:1; padding:16px; border:none;
+  border-radius:50px;
+  font-family:'Fredoka One',cursive;
+  font-size:18px; cursor:pointer;
+  transition:transform 0.15s;
+}
+.pop-btn:active { transform:scale(0.96); }
+.pop-btn.again { background:linear-gradient(135deg,var(--accent1),var(--accent4)); color:white; box-shadow:0 8px 25px rgba(255,60,172,0.4); }
+.pop-btn.quit { background: linear-gradient(135deg, #444, #222); color: white; border: none; }
+
+/* ── FAIL SCREEN ── */
+#failScreen {
+  background:radial-gradient(ellipse at center,#2a0000 0%,#0d0d1a 80%);
+  z-index:100; text-align:center;
+}
+.fail-title {
+  font-family:'Fredoka One',cursive;
+  font-size:96px; color:#ff2222;
+  text-shadow:0 0 40px rgba(255,34,34,0.9),0 0 80px rgba(255,34,34,0.4);
+  animation:fail-shake 0.4s ease-in-out 3;
+  line-height:1; margin-bottom:8px;
+}
+.fail-sub { font-family:'Boogaloo',cursive; font-size:22px; color:rgba(255,255,255,0.5); margin-bottom:40px; line-height:1.5; }
+@keyframes fail-shake {
+  0%,100% { transform:translateX(0) rotate(0deg); }
+  25% { transform:translateX(-12px) rotate(-3deg); }
+  75% { transform:translateX(12px) rotate(3deg); }
+}
+
+/* Stars */
+.stars { position:fixed; inset:0; pointer-events:none; z-index:0; }
+.star { position:absolute; background:white; border-radius:50%; animation:twinkle var(--d) ease-in-out infinite; }
+@keyframes twinkle { 0%,100% { opacity:0.1; } 50% { opacity:0.8; } }
+@keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-12px); } }
+  /* ── SPLASH SCREEN ── */
+  #splashScreen {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 1s ease;
+  }
+  #splashScreen.fade-in { opacity: 1; }
+  #splashScreen.fade-out { opacity: 0; }
+  #splashImg {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+  /* ── DIFFICULTY SCREEN ── */
+  #difficultyScreen {
+    background: radial-gradient(ellipse at top, #1a0030 0%, #0d0d1a 70%);
+    text-align: center;
+    gap: 16px;
+  }
+  .diff-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 32px;
+    color: var(--accent2);
+    text-shadow: 0 0 20px rgba(255,234,0,0.6);
+    margin-bottom: 8px;
+  }
+  .diff-sub {
+    font-size: 15px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+  .diff-btn {
+    width: 100%;
+    max-width: 320px;
+    padding: 18px;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 22px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .diff-btn:active { transform: scale(0.96); }
+  .diff-btn.easy {
+    background: linear-gradient(135deg, #00f5d4, #00b4d8);
+    color: #0d0d1a;
+    box-shadow: 0 8px 25px rgba(0,245,212,0.4);
+  }
+  .diff-btn.intermediate {
+    background: linear-gradient(135deg, #ffea00, #ff6b35);
+    color: #0d0d1a;
+    box-shadow: 0 8px 25px rgba(255,234,0,0.4);
+  }
+  .diff-btn.advanced {
+    background: linear-gradient(135deg, #ff3cac, #ff0000);
+    color: white;
+    box-shadow: 0 8px 25px rgba(255,60,172,0.5);
+  }
+  .diff-desc {
+    font-size: 12px;
+    opacity: 0.7;
+    display: block;
+    margin-top: 2px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<div id="splashScreen">
+  <img id="splashImg" src="DFG_cover.png" alt="DFG">
+</div>
+
+<div class="stars" id="stars"></div>
+<div id="levelFlash"></div>
+<div id="levelFlashText"></div>
+<div id="regressionWarning"></div>
+
+<!-- DIFFICULTY SCREEN -->
+<div class="screen hidden" id="difficultyScreen">
+  <div class="diff-title">Select Difficulty</div>
+  <div class="diff-sub">How brave are you? 😈</div>
+  <button class="diff-btn easy" id="btnEasy">
+    😎 Easy
+    <span class="diff-desc">Light drain</span>
+  </button>
+  <button class="diff-btn intermediate" id="btnIntermediate">
+    😤 Intermediate
+    <span class="diff-desc">Medium drain</span>
+  </button>
+  <button class="diff-btn advanced" id="btnAdvanced">
+    💀 Advanced
+    <span class="diff-desc">Brutal drain</span>
+  </button>
+</div>
+
+<!-- COUNTDOWN -->
+<div class="screen hidden" id="countdownScreen">
+  <div id="countdownDisplay" class="countdown-number">5</div>
+</div>
+
+<!-- GAME SCREEN -->
+<div class="screen hidden" id="gameScreen">
+  <div id="screenShakeWrapper">
+    <div class="top-bar">
+      <div class="timer-box" id="timerDisplay">0.00s</div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="level-image-wrap">
+      <img class="level-bg active" data-level="1" src="level1.png" alt="Level 1">
+      <img class="level-bg inactive" data-level="2" src="level2.png" alt="Level 2">
+      <img class="level-bg inactive" data-level="3" src="level3.png" alt="Level 3">
+      <img class="level-bg inactive" data-level="4" src="level4.png" alt="Level 4">
+      <img class="level-bg inactive" data-level="5" src="level5.png" alt="Level 5">
+    </div>
+    <div class="shake-count" id="shakeCount">0</div>
+    <div class="shake-label" id="shakeLabel">shake count</div>
+  </div>
+</div>
+
+<!-- POP SCREEN -->
+<div class="screen hidden" id="popScreen">
+  <canvas id="fireworksCanvas"></canvas>
+  <div class="pop-title">💥 POP! 💥</div>
+  <div class="pop-sub">You popped it in</div>
+  <div class="pop-time" id="popTime">0.00s</div>
+  <div class="pop-rank" id="popRank"></div>
+  <div class="leaderboard" id="leaderboard"></div>
+  <div class="pop-btns">
+    <button class="pop-btn again" id="btnAgain">🔄 Shake Again!</button>
+    <button class="pop-btn quit" id="btnQuit">🗑️ Reset Scores</button>
+  </div>
+</div>
+
+<!-- FAIL SCREEN -->
+<div class="screen hidden" id="failScreen">
+  <div class="fail-title">FAIL!</div>
+  <div class="fail-sub">You stopped shaking!<br>So close... yet so far. 😂</div>
+  <div class="pop-btns" style="max-width:320px;width:100%;">
+    <button class="pop-btn again" id="btnFailAgain">🔄 Try Again!</button>
+    <button class="pop-btn quit" id="btnFailQuit">🗑️ Reset Scores</button>
+  </div>
+</div>
+
+
+
+<script>
+// ── STARS ──
+(function(){
+  const wrap = document.getElementById('stars');
+  for(let i=0;i<60;i++){
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random()*2.5+0.5;
+    s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${(Math.random()*3+1).toFixed(1)}s;animation-delay:${(Math.random()*3).toFixed(1)}s;`;
+    wrap.appendChild(s);
+  }
+})();
+
+// ── CONFIG ──
+const DIFFICULTY = {
+  easy: {
+    levels: [
+      {total:10}, {total:20}, {total:40}, {total:70}, {total:120}
+    ],
+    idleMs: 2000,
+    drainSecs: 12
+  },
+  intermediate: {
+    levels: [
+      {total:100}, {total:225}, {total:425}, {total:550}, {total:700}
+    ],
+    idleMs: 1200,
+    drainSecs: 4.0
+  },
+  advanced: {
+    levels: [
+      {total:250}, {total:550}, {total:1000}, {total:1450}, {total:1900}
+    ],
+    idleMs: 800,
+    drainSecs: 2.5
+  }
+};
+
+let currentDifficulty = 'easy';
+let LEVELS = DIFFICULTY.easy.levels;
+let IDLE_BEFORE_REGRESS_MS = DIFFICULTY.easy.idleMs;
+let REGRESSION_RATE = DIFFICULTY.easy.levels[4].total / DIFFICULTY.easy.drainSecs;
+
+const G_LONG_THRESHOLD = 2.5;
+const LONG_SHAKE_VALUE = 3.5;
+const SHAKE_COOLDOWN_MS = 120;
+
+// ── STATE ──
+let currentLevel = 1;
+let shakeCount = 0;
+let gameRunning = false;
+let startTime = null;
+let timerInterval = null;
+let lastShakeTime = 0;
+let prevDirection = 0;
+let halfSwingDone = false;
+let peakG = 0;
+let shakeAnimFrame = null;
+let regressionFrame = null;
+let lastShakeTimestamp = 0;
+let isDesktop = false;
+
+// Mouse shake state
+let lastMouseY = null;
+let mouseDirection = 0;
+let mouseHalfDone = false;
+let lastMouseShakeTime = 0;
+let mouseSpeedPeak = 0;
+let lastMouseTime = null;
+let audioCtx = null;
+
+// ── HELPERS ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+function isMobile() {
+  return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent)
+    || (navigator.maxTouchPoints > 1 && !/Macintosh/.test(navigator.userAgent));
+}
+
+// ── INIT ──
+function init() {
+  isDesktop = !isMobile();
+
+  // Wire up buttons
+  document.getElementById('btnAgain').addEventListener('click', restartGame);
+  document.getElementById('btnQuit').addEventListener('click', quitGame);
+  document.getElementById('btnFailAgain').addEventListener('click', restartGame);
+  document.getElementById('btnFailQuit').addEventListener('click', quitGame);
+  document.getElementById('btnEasy').addEventListener('click', () => selectDifficulty('easy'));
+  document.getElementById('btnIntermediate').addEventListener('click', () => selectDifficulty('intermediate'));
+  document.getElementById('btnAdvanced').addEventListener('click', () => selectDifficulty('advanced'));
+
+  // Show splash first
+  showSplash(() => {
+    if (isDesktop) {
+      showTapToStart('Welcome to 21st Century DFG', '', 'Move your mouse<br>rapidly UP and DOWN<br>until you pop it! 💥', 'Let\'s GO! 🤙', () => {
+        try { const j = new Audio('splashjingle.mp3'); j.volume=1.0; j.play().catch(()=>{}); } catch(e) {}
+        document.getElementById('tapToStart').remove();
+        startMouseListener();
+        showScreen('difficultyScreen');
+      });
+    } else {
+      if (typeof DeviceMotionEvent !== 'undefined' &&
+          typeof DeviceMotionEvent.requestPermission === 'function') {
+        showIOSPermScreen();
+      } else {
+        showTapToStart('Welcome to 21st Century DFG', '', 'Shake your phone<br>rapidly UP and DOWN<br>until you pop it! 💥', 'Let\'s GO! 🤙', () => {
+          try { const j = new Audio('splashjingle.mp3'); j.volume=1.0; j.play().catch(()=>{}); } catch(e) {}
+          document.getElementById('tapToStart').remove();
+          startMotionListener();
+          showScreen('difficultyScreen');
+        });
+      }
+    }
+  });
+}
+
+// ── SPLASH SCREEN ──
+function showSplash(callback) {
+  const splash = document.getElementById('splashScreen');
+
+  // Fade in
+  requestAnimationFrame(() => {
+    splash.classList.add('fade-in');
+  });
+
+  // Hold for 5 seconds then fade out
+  setTimeout(() => {
+    splash.classList.remove('fade-in');
+    splash.classList.add('fade-out');
+    setTimeout(() => {
+      splash.style.display = 'none';
+      callback();
+    }, 1000);
+  }, 5000);
+}
+
+// ── SELECT DIFFICULTY ──
+function selectDifficulty(diff) {
+  currentDifficulty = diff;
+  const d = DIFFICULTY[diff];
+  LEVELS = d.levels;
+  IDLE_BEFORE_REGRESS_MS = d.idleMs;
+  REGRESSION_RATE = d.levels[4].total / d.drainSecs;
+  showScreen('countdownScreen');
+  startCountdown();
+}
+
+// ── iOS PERMISSION ──
+function showIOSPermScreen() {
+  showTapToStart('Welcome to 21st Century DFG', '', 'We need access to your motion sensor<br>to detect your shaking!', 'Let\'s GO! 🤙', () => {
+    DeviceMotionEvent.requestPermission().then(state => {
+      document.getElementById('tapToStart').remove();
+      if (state === 'granted') {
+        startMotionListener();
+        showScreen('difficultyScreen');
+      } else {
+        alert('Motion access denied. Please allow motion access and refresh!');
+      }
+    }).catch(e => {
+      document.getElementById('tapToStart').remove();
+      alert('Error: ' + e.message);
+    });
+  });
+}
+
+function showTapToStart(emoji, title, subtitle, btnText, callback) {
+  // Unlock audio context on tap
+  const div = document.createElement('div');
+  div.id = 'tapToStart';
+  div.style.cssText = `
+    position:fixed;inset:0;z-index:999;
+    background:#0d0d1a;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    font-family:'Fredoka One',cursive;
+    color:white;text-align:center;padding:24px;
+  `;
+  div.innerHTML = `
+    <div style="font-size:28px;color:#ffea00;margin-bottom:20px;text-shadow:0 0 20px rgba(255,234,0,0.6);line-height:1.2;">${emoji}</div>
+    <div style="font-size:32px;color:#ff3cac;margin-bottom:12px;">${title}</div>
+    <div style="font-size:16px;color:rgba(255,255,255,0.6);margin-bottom:32px;line-height:1.6">${subtitle}</div>
+    <button id="tapStartBtn" style="
+      padding:18px 48px;border:none;border-radius:50px;
+      font-family:'Fredoka One',cursive;font-size:22px;
+      background:linear-gradient(135deg,#ff3cac,#ff6b35);
+      color:white;cursor:pointer;
+      box-shadow:0 8px 30px rgba(255,60,172,0.5);
+    ">${btnText}</button>
+  `;
+  document.body.appendChild(div);
+  document.getElementById('tapStartBtn').addEventListener('click', () => {
+    // Unlock audio
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const buf = audioCtx.createBuffer(1,1,22050);
+      const src = audioCtx.createBufferSource();
+      src.buffer = buf;
+      src.connect(audioCtx.destination);
+      src.start(0);
+    } catch(e) {}
+    // Unlock vibration
+    navigator.vibrate && navigator.vibrate(1);
+    callback();
+  });
+}
+
+// ── COUNTDOWN ──
+function startCountdown() {
+  let count = 5;
+  const display = document.getElementById('countdownDisplay');
+  display.className = 'countdown-number';
+  display.textContent = count;
+  playBeep('countdown');
+
+  const tick = setInterval(() => {
+    count--;
+    if (count > 0) {
+      display.className = 'countdown-number';
+      void display.offsetWidth;
+      display.textContent = count;
+      playBeep('countdown');
+    } else {
+      clearInterval(tick);
+      display.className = 'countdown-go';
+      void display.offsetWidth;
+      display.textContent = 'GO!';
+      playBeep('go');
+      setTimeout(() => {
+        showScreen('gameScreen');
+        startGame();
+      }, 600);
+    }
+  }, 1000);
+}
+
+// ── GAME ──
+function startGame() {
+  currentLevel = 1;
+  shakeCount = 0;
+  gameRunning = true;
+  startTime = Date.now();
+  lastShakeTime = 0;
+  lastShakeTimestamp = Date.now();
+  prevDirection = 0;
+  halfSwingDone = false;
+  peakG = 0;
+  lastMouseY = null;
+  mouseDirection = 0;
+  mouseHalfDone = false;
+  mouseSpeedPeak = 0;
+
+  updateUI();
+  timerInterval = setInterval(updateTimer, 50);
+  startRegressionLoop();
+}
+
+function updateTimer() {
+  if (!gameRunning) return;
+  const elapsed = (Date.now() - startTime) / 1000;
+  document.getElementById('timerDisplay').textContent = elapsed.toFixed(2) + 's';
+}
+
+// ── MOUSE SHAKE (DESKTOP) ──
+function startMouseListener() {
+  document.addEventListener('mousemove', onMouseMove);
+}
+
+function onMouseMove(e) {
+  if (!gameRunning) return;
+  const now = Date.now();
+  const y = e.clientY;
+
+  if (lastMouseY === null) { lastMouseY = y; lastMouseTime = now; return; }
+
+  const dy = y - lastMouseY;
+  const dt = now - lastMouseTime || 1;
+  const speed = Math.abs(dy) / dt; // px per ms
+  lastMouseY = y;
+  lastMouseTime = now;
+
+  if (Math.abs(dy) < 2) return; // ignore tiny movements
+
+  const dir = dy > 0 ? 1 : -1;
+  if (speed > mouseSpeedPeak) mouseSpeedPeak = speed;
+
+  // Screen shake effect
+  const shiftDir = -dir;
+  const wrapper = document.getElementById('screenShakeWrapper');
+  wrapper.style.transform = `translateY(${shiftDir * Math.min(Math.abs(dy)*0.5, 40)}px)`;
+  if (shakeAnimFrame) cancelAnimationFrame(shakeAnimFrame);
+  shakeAnimFrame = requestAnimationFrame(() => {
+    wrapper.style.transform = 'translateY(0)';
+  });
+
+  // Detect direction change = half swing
+  if (dir !== mouseDirection && mouseDirection !== 0) {
+    if (mouseHalfDone) {
+      // Full swing!
+      if (now - lastMouseShakeTime > SHAKE_COOLDOWN_MS) {
+        lastMouseShakeTime = now;
+        // Speed > 1.5 px/ms = long shake
+        const isLong = mouseSpeedPeak > 1.5;
+        const addCount = isLong ? LONG_SHAKE_VALUE : 1;
+        registerShake(addCount);
+        mouseSpeedPeak = 0;
+        mouseHalfDone = false;
+      }
+    } else {
+      mouseHalfDone = true;
+    }
+  }
+  mouseDirection = dir;
+}
+
+// ── MOTION (MOBILE) ──
+function startMotionListener() {
+  window.addEventListener('devicemotion', onDeviceMotion, true);
+}
+
+let lastShakeY = 0;
+let shakePhase = 0; // 0=waiting, 1=went one way, 2=came back
+let shakeThreshold = 12; // minimum acceleration to count
+
+function onDeviceMotion(e) {
+  if (!gameRunning) return;
+  const accel = e.accelerationIncludingGravity || e.acceleration;
+  if (!accel) return;
+
+  const ay = accel.y || 0;
+  const now = Date.now();
+  const absAy = Math.abs(ay);
+
+  // Screen shake effect
+  const wrapper = document.getElementById('screenShakeWrapper');
+  const shiftDir = ay > 0 ? -1 : 1;
+  wrapper.style.transform = `translateY(${shiftDir * Math.min(absAy * 1.5, 40)}px)`;
+  if (shakeAnimFrame) cancelAnimationFrame(shakeAnimFrame);
+  shakeAnimFrame = requestAnimationFrame(() => {
+    wrapper.style.transform = 'translateY(0)';
+  });
+
+  // Simple threshold shake detection
+  if (absAy < shakeThreshold) return;
+
+  const now2 = Date.now();
+  if (now2 - lastShakeTime < SHAKE_COOLDOWN_MS) return;
+
+  // Check direction flip
+  const dir = ay > 0 ? 1 : -1;
+  if (shakePhase === 0) {
+    lastShakeY = dir;
+    shakePhase = 1;
+  } else if (shakePhase === 1 && dir !== lastShakeY) {
+    // Full swing detected!
+    lastShakeTime = now2;
+    const gForce = absAy / 9.81;
+    const isLong = gForce >= G_LONG_THRESHOLD;
+    const addCount = isLong ? LONG_SHAKE_VALUE : 1;
+    registerShake(addCount);
+    shakePhase = 0;
+    lastShakeY = 0;
+  }
+}
+
+// ── REGISTER SHAKE ──
+function registerShake(amount) {
+  lastShakeTimestamp = Date.now();
+  document.getElementById('regressionWarning').classList.remove('active');
+  shakeCount += amount;
+  playShakeSound();
+  updateUI();
+  checkLevelUp();
+}
+
+// ── LEVEL CHECK ──
+function checkLevelUp() {
+  const maxTotal = LEVELS[4].total;
+  if (currentLevel < 5 && shakeCount >= LEVELS[currentLevel-1].total) {
+    currentLevel++;
+    triggerLevelUp();
+  } else if (currentLevel === 5 && shakeCount >= maxTotal) {
+    triggerPop();
+  } else if (currentLevel === 5) {
+    const shakesInL5 = shakeCount - LEVELS[3].total;
+    if (shakesInL5 > 0 && Math.floor(shakesInL5) % 10 < LONG_SHAKE_VALUE) {
+      vibrate(50);
+    }
+  }
+}
+
+function triggerLevelUp() {
+  vibrate([100,50,100]);
+  showLevelFlash('🔥');
+  playLevelUpSound(currentLevel);
+  updateUI();
+}
+
+// ── SHAKE SOUND ──
+function playShakeSound() {
+  try {
+    const audio = new Audio('shake.mp3');
+    audio.volume = 0.6;
+    audio.play().catch(() => {});
+  } catch(e) {}
+}
+
+
+function playLevelUpSound(level) {
+  try {
+    const ctx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+
+    // Try custom sound first
+    const audio = new Audio('levelup.mp3');
+    audio.play().catch(() => playLevelUpBeep(ctx, level));
+  } catch(e) {
+    playLevelUpBeep(null, level);
+  }
+}
+
+function playLevelUpBeep(ctx, level) {
+  try {
+    if (!ctx) ctx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+
+    // Base frequency gets higher with each level
+    const baseFreq = [300, 400, 500, 650, 850][level - 1] || 300;
+    const notes = [baseFreq, baseFreq * 1.25, baseFreq * 1.5];
+
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      const t = ctx.currentTime + i * 0.1;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.4, t + 0.02);
+      gain.gain.linearRampToValueAtTime(0, t + 0.12);
+      osc.start(t); osc.stop(t + 0.15);
+    });
+  } catch(e) {}
+}
+
+// ── REGRESSION ──
+function startRegressionLoop() {
+  let lastTick = Date.now();
+  function tick() {
+    if (!gameRunning) return;
+    const now = Date.now();
+    const dt = (now - lastTick) / 1000;
+    lastTick = now;
+    const idleMs = now - lastShakeTimestamp;
+
+    // FAIL if no shaking at all within 5 seconds of game start
+    if (shakeCount === 0 && (now - startTime) >= 5000) {
+      triggerFail();
+      return;
+    }
+
+    if (idleMs >= IDLE_BEFORE_REGRESS_MS && shakeCount > 0) {
+      document.getElementById('regressionWarning').classList.add('active');
+      shakeCount = Math.max(0, shakeCount - REGRESSION_RATE * dt);
+      const newLevel = getLevelFromCount(shakeCount);
+      if (newLevel < currentLevel) {
+        currentLevel = newLevel;
+        vibrate([80]);
+      }
+      updateUI();
+      if (shakeCount <= 0) { triggerFail(); return; }
+    } else if (idleMs < IDLE_BEFORE_REGRESS_MS) {
+      document.getElementById('regressionWarning').classList.remove('active');
+    }
+    regressionFrame = requestAnimationFrame(tick);
+  }
+  regressionFrame = requestAnimationFrame(tick);
+}
+
+function getLevelFromCount(count) {
+  if (count >= LEVELS[3].total) return 5;
+  if (count >= LEVELS[2].total) return 4;
+  if (count >= LEVELS[1].total) return 3;
+  if (count >= LEVELS[0].total) return 2;
+  return 1;
+}
+
+// ── UPDATE UI ──
+function updateUI() {
+  document.getElementById('shakeCount').textContent = Math.floor(shakeCount);
+  document.querySelectorAll('.level-bg').forEach(el => {
+    const lv = parseInt(el.dataset.level);
+    el.classList.toggle('active', lv === currentLevel);
+    el.classList.toggle('inactive', lv !== currentLevel);
+  });
+  const prevTotal = currentLevel === 1 ? 0 : LEVELS[currentLevel-2].total;
+  const currTotal = LEVELS[currentLevel-1].total;
+  const progress = Math.min((shakeCount - prevTotal) / (currTotal - prevTotal) * 100, 100);
+  document.getElementById('progressFill').style.width = progress + '%';
+}
+
+// ── LEVEL FLASH ──
+function showLevelFlash(text) {
+  const flash = document.getElementById('levelFlash');
+  const flashText = document.getElementById('levelFlashText');
+  flashText.textContent = text;
+  flash.style.opacity = '0.25';
+  flashText.style.transform = 'translate(-50%,-50%) scale(1)';
+  flashText.style.opacity = '1';
+  setTimeout(() => {
+    flash.style.opacity = '0';
+    flashText.style.opacity = '0';
+    flashText.style.transform = 'translate(-50%,-50%) scale(0)';
+  }, 600);
+}
+
+// ── VIBRATE ──
+function vibrate(pattern) {
+  if (navigator.vibrate) navigator.vibrate(pattern);
+}
+
+// ── FAIL ──
+function triggerFail() {
+  gameRunning = false;
+  clearInterval(timerInterval);
+  if (regressionFrame) cancelAnimationFrame(regressionFrame);
+  window.removeEventListener('devicemotion', onDeviceMotion, true);
+  document.getElementById('regressionWarning').classList.remove('active');
+  vibrate([300,100,300,100,300]);
+  playFailSound();
+  showScreen('failScreen');
+}
+
+// ── POP ──
+function triggerPop() {
+  gameRunning = false;
+  clearInterval(timerInterval);
+  if (regressionFrame) cancelAnimationFrame(regressionFrame);
+  window.removeEventListener('devicemotion', onDeviceMotion, true);
+  document.getElementById('regressionWarning').classList.remove('active');
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+  const score = parseFloat(elapsed);
+  const rank = saveScore(score);
+
+  document.getElementById('popTime').textContent = elapsed + 's';
+  document.getElementById('popRank').textContent = getRankText(rank) + ' (' + currentDifficulty.toUpperCase() + ')';
+  renderLeaderboard(score);
+
+  // Play victory jingle
+  try { const j = new Audio('victoryjingle.mp3'); j.volume=1.0; j.play().catch(()=>{}); } catch(e) {}
+
+  showScreen('popScreen');
+  playFanfare();
+  startFireworks();
+  vibrate([200,100,200,100,400]);
+}
+
+// ── LEADERBOARD ──
+function getScores(diff) {
+  try { return JSON.parse(localStorage.getItem('snp_scores_' + diff) || '[]'); }
+  catch { return []; }
+}
+function saveScore(score) {
+  let scores = getScores(currentDifficulty);
+  scores.push(score);
+  scores.sort((a,b) => a-b);
+  scores = scores.slice(0,3);
+  localStorage.setItem('snp_scores_' + currentDifficulty, JSON.stringify(scores));
+  return scores.indexOf(score)+1;
+}
+function getRankText(rank) {
+  if (rank===1) return '🏆 NEW RECORD! You\'re #1!';
+  if (rank===2) return '🥈 2nd Best Time!';
+  if (rank===3) return '🥉 3rd Best Time!';
+  return 'You completed it!';
+}
+function renderLeaderboard(currentScore) {
+  const medals = ['🥇','🥈','🥉'];
+  const diffs = ['easy','intermediate','advanced'];
+  const labels = { easy:'😎 Easy', intermediate:'😤 Intermediate', advanced:'💀 Advanced' };
+  let html = '<div class="lb-title">🏆 Top 3 Per Difficulty</div>';
+
+  diffs.forEach(diff => {
+    const scores = getScores(diff);
+    html += `<div style="margin:8px 0 4px;font-size:13px;color:rgba(255,255,255,0.5);text-align:left;">${labels[diff]}</div>`;
+    if (scores.length === 0) {
+      html += `<div class="lb-row"><span style="color:rgba(255,255,255,0.3);font-size:13px;">No scores yet</span></div>`;
+    } else {
+      scores.forEach((s,i) => {
+        const isHighlight = diff === currentDifficulty && s === currentScore;
+        html += `<div class="lb-row ${isHighlight?'highlight':''}">
+          <span class="lb-rank">#${i+1}</span>
+          <span class="lb-time">${s.toFixed(2)}s</span>
+          <span class="lb-medal">${medals[i]||''}</span>
+        </div>`;
+      });
+    }
+  });
+  document.getElementById('leaderboard').innerHTML = html;
+}
+
+// ── FAIL SOUND ──
+function playFailSound() {
+  // Try custom sound first
+  try {
+    const audio = new Audio('fail.mp3');
+    audio.play().catch(() => playFailBeep());
+  } catch(e) {
+    playFailBeep();
+  }
+}
+
+function playFailBeep() {
+  try {
+    const ctx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    // Descending wah-wah fail sound
+    [400, 300, 200, 150].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'sawtooth';
+      const t = ctx.currentTime + i * 0.15;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.4, t + 0.05);
+      gain.gain.linearRampToValueAtTime(0, t + 0.2);
+      osc.start(t); osc.stop(t + 0.25);
+    });
+  } catch(e) {}
+}
+
+
+function playBeep(type) {
+  try {
+    const ctx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+
+    if (type === 'countdown') {
+      // Single deep beep like a racing game
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 440;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.02);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.25);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.3);
+    } else if (type === 'go') {
+      // Higher pitched GO sound — two quick ascending tones
+      [600, 900].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = freq;
+        osc.type = 'square';
+        const t = ctx.currentTime + i * 0.12;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.4, t + 0.02);
+        gain.gain.linearRampToValueAtTime(0, t + 0.2);
+        osc.start(t);
+        osc.stop(t + 0.25);
+      });
+    }
+  } catch(e) {}
+}
+
+
+function playFanfare() {
+  // Play custom finish sound layered on top
+  try {
+    const audio = new Audio('finish.mp3');
+    audio.volume = 0.8;
+    audio.play().catch(() => {});
+  } catch(e) {}
+
+  try {
+    const ctx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const delay = ctx.createDelay(1.0);
+    delay.delayTime.value = 0.3;
+    const feedback = ctx.createGain();
+    feedback.gain.value = 0.4;
+    const delayGain = ctx.createGain();
+    delayGain.gain.value = 0.5;
+    delay.connect(feedback);
+    feedback.connect(delay);
+    delay.connect(delayGain);
+    delayGain.connect(ctx.destination);
+
+    [523,659,784,1047,1319].forEach((freq,i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.connect(delay);
+      osc.frequency.value = freq; osc.type = 'sine';
+      const t = ctx.currentTime + i*0.12;
+      gain.gain.setValueAtTime(0,t);
+      gain.gain.linearRampToValueAtTime(0.3,t+0.05);
+      gain.gain.linearRampToValueAtTime(0,t+0.25);
+      osc.start(t); osc.stop(t+0.3);
+    });
+  } catch(e) {}
+}
+
+// ── FIREWORKS ──
+function startFireworks() {
+  const canvas = document.getElementById('fireworksCanvas');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  const particles = [];
+  const colors = ['#ff3cac','#ffea00','#00f5d4','#ff6b35','#ffffff','#a855f7'];
+
+  function burst(x,y) {
+    for(let i=0;i<60;i++){
+      const angle = (Math.PI*2/60)*i;
+      const speed = Math.random()*6+2;
+      particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:1,decay:Math.random()*0.015+0.008,color:colors[Math.floor(Math.random()*colors.length)],size:Math.random()*4+2});
+    }
+  }
+
+  let bursts=0;
+  const bi = setInterval(()=>{
+    burst(Math.random()*canvas.width, Math.random()*canvas.height*0.7);
+    if(++bursts>=8) clearInterval(bi);
+  },400);
+
+  function draw() {
+    ctx.fillStyle='rgba(13,13,26,0.15)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.08; p.life-=p.decay;
+      ctx.globalAlpha=Math.max(p.life,0);
+      ctx.fillStyle=p.color;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha=1;
+    for(let i=particles.length-1;i>=0;i--){ if(particles[i].life<=0) particles.splice(i,1); }
+    if(particles.length>0||bursts<8) requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  draw();
+}
+
+// ── RESTART / QUIT ──
+function restartGame() {
+  shakeCount=0; currentLevel=1;
+  gameRunning = false;
+  if(regressionFrame) cancelAnimationFrame(regressionFrame);
+  clearInterval(timerInterval);
+  document.getElementById('regressionWarning').classList.remove('active');
+  const fc = document.getElementById('fireworksCanvas');
+  if(fc) fc.getContext('2d').clearRect(0,0,window.innerWidth,window.innerHeight);
+
+  // Reset shake detection state
+  prevDirection = 0;
+  halfSwingDone = false;
+  peakG = 0;
+  lastShakeY = 0;
+  shakePhase = 0;
+  lastShakeTime = 0;
+  lastMouseY = null;
+  mouseDirection = 0;
+  mouseHalfDone = false;
+  mouseSpeedPeak = 0;
+
+  // Play splash jingle
+  try { const j = new Audio('splashjingle.mp3'); j.volume=1.0; j.play().catch(()=>{}); } catch(e) {}
+
+  // Re-add motion listener for Android
+  if (!isDesktop) {
+    window.removeEventListener('devicemotion', onDeviceMotion, true);
+    window.addEventListener('devicemotion', onDeviceMotion, true);
+  }
+
+  showScreen('difficultyScreen');
+}
+
+function quitGame() {
+  if (confirm('Reset all scores? This cannot be undone!')) {
+    localStorage.removeItem('snp_scores_easy');
+    localStorage.removeItem('snp_scores_intermediate');
+    localStorage.removeItem('snp_scores_advanced');
+    showScreen('difficultyScreen');
+  }
+}
+
+// ── UNLOCK VIBRATION ON FIRST TOUCH ──
+let vibrationUnlocked = false;
+function unlockVibration() {
+  if (!vibrationUnlocked) {
+    navigator.vibrate && navigator.vibrate(1);
+    vibrationUnlocked = true;
+  }
+}
+document.addEventListener('touchstart', unlockVibration, {once: true});
+document.addEventListener('click', unlockVibration, {once: true});
+
+// ── START ──
+window.onload = init;
+</script>
+</body>
+</html>
